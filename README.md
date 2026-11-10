@@ -1,46 +1,46 @@
 # Member Health Deterioration Risk Analysis
 
-Microsoft Fabric project scaffold for a 6-hour ICU early-sepsis prediction use case.
+Microsoft Fabric project for predicting patient deterioration within the next six hours from ICU hourly observations. The workflow uses PhysioNet-style data, builds Bronze and Silver layers, evaluates an XGBoost classifier, and publishes controlled inference outputs to a Gold layer.
 
-## Current status
+> This repository contains project code, aggregate results, and visualizations. It excludes raw clinical records, workspace identifiers, credentials, and patient-level result tables.
 
-This repository is publication-ready as a project shell, but not as a completed machine-learning study. No early-sepsis notebook, feature specification, cohort definition, labels, trained model, or evaluation artifact was supplied with the available materials.
+## Key results
 
-The only attached notebook reviewed was a Fabric Liquid Clustering benchmark on synthetic clinical observations. A cleaned, output-free copy is included as related platform engineering material; it is not evidence of sepsis-model performance.
+| Metric | Reported result |
+| --- | ---: |
+| Test PR-AUC | 0.1166 |
+| Random PR-AUC baseline | 0.0174 |
+| Test ROC-AUC | 0.8414 |
+| Chosen threshold | 0.5534 |
+| Patient detection rate | 50.81% |
+| Patient false-alert rate | 4.66% |
 
-## Intended 6-hour prediction problem
+PR-AUC is emphasized because deterioration-positive hours are rare. The model ranks risk above random, but it is an analytical early-warning prototype and is not clinically validated.
 
-- Population: define the ICU cohort and exclusions before training.
-- Index time: define when risk is calculated.
-- Prediction window: 6 hours.
-- Outcome: define the sepsis label and clinical event time using an approved specification.
-- Split strategy: use patient-level and time-aware validation to reduce leakage.
+## Visualizations
 
-## Conceptual architecture
+### Precision-recall curve
+![Precision-recall curve](docs/images/precision-recall-curve.png)
 
-\`\`\`mermaid
-flowchart LR
-  A[Approved ICU events] --> B[Fabric Lakehouse]
-  B --> C[Time-windowed feature engineering]
-  C --> D[Train and validation splits]
-  D --> E[Risk model]
-  E --> F[Calibration, fairness and drift review]
-  F --> G[Clinical-review reporting]
-\`\`\`
+This shows the trade-off between identifying more positive hours and alert precision. Test PR-AUC is 0.1166 versus the 0.0174 random baseline.
 
-## Available related material
+### Confusion matrix
+![Confusion matrix](docs/images/confusion-matrix.png)
 
-- notebooks/related_liquid_clustering_benchmark.ipynb: sanitized Fabric query-layout benchmark.
-- docs/liquid-clustering-benchmark.md: measured platform benchmark summary and limitations.
+At the selected threshold, this chart reported 1,005 detected positive hours, 3,096 missed positive hours, and 5,001 false-positive alerts. Sensitivity improvement remains necessary.
 
-## Missing before an ML release
+### Patient-level early-warning performance
+![Patient-level early-warning performance](docs/images/patient-level-warning-performance.png)
 
-- Source notebook or pipeline
-- Data dictionary and feature definitions
-- Cohort, label, and timestamp specification
-- Model configuration and training code
-- Evaluation results, calibration, subgroup analysis, and clinical review
+This asks whether a deteriorating patient received at least one alert. It reports 50.81% detection of deteriorating patients and a 4.66% false-alert rate among non-deteriorating patients.
 
-## Safety
+## Project contents
 
-This project must not be used for diagnosis or treatment decisions without appropriate clinical governance, prospective validation, privacy review, and approved deployment controls.
+- `notebooks/` — source preparation, Bronze ingestion, Silver transformations, ML evaluation, and Gold inference. Safe aggregate outputs and chart outputs are retained.
+- `docs/images/` — project charts used in this README.
+- `pipeline/` — logical notebook orchestration template.
+
+## Important limitations
+
+This is not clinical decision support. Real-world use needs clinical validation, governance approval, fairness and calibration analysis, prospective testing, drift monitoring, and a clinically selected operating threshold.
+
