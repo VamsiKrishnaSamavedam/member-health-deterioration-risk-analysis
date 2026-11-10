@@ -1,8 +1,34 @@
 # Member Health Deterioration Risk Analysis
 
-Microsoft Fabric project for predicting patient deterioration within the next six hours from ICU hourly observations. The workflow uses PhysioNet-style data, builds Bronze and Silver layers, evaluates an XGBoost classifier, and publishes controlled inference outputs to a Gold layer.
+An end-to-end Microsoft Fabric machine-learning project that estimates whether an ICU patient is likely to deteriorate within the next six hours, using hourly clinical observations.
 
 > This repository contains project code, aggregate results, and visualizations. It excludes raw clinical records, workspace identifiers, credentials, and patient-level result tables.
+
+## Why this project matters
+
+Clinical deterioration can develop between routine assessments. A short-horizon risk estimate can help a care team prioritize attention toward patients whose recent vital signs and laboratory values suggest elevated risk. This project demonstrates the data-engineering and analytical workflow for an early-warning prototype; it is not intended to replace clinical judgment.
+
+## Objective
+
+Build a reproducible Bronze → Silver → ML → Gold workflow that:
+
+1. consolidates hourly ICU observations;
+2. validates and prepares time-aware clinical features;
+3. predicts deterioration/sepsis risk in the next six hours;
+4. evaluates alert trade-offs on held-out data; and
+5. publishes governed, analytics-ready model outputs.
+
+## Dataset
+
+The pipeline uses PhysioNet-style de-identified ICU time-series data. The supplied Bronze notebook recorded **1,552,210 hourly rows**, **40,336 patients**, and **43 fields**. Inputs include vital signs, laboratory measurements, demographics, admission context, ICU length of stay, and the deterioration/sepsis label. Raw data is intentionally excluded from this repository.
+
+## Solution architecture
+
+**Hourly ICU observations** → **Bronze ingestion and validation** → **Silver feature engineering** → **XGBoost early-warning evaluation** → **Gold inference and aggregate reporting**
+
+## Modeling approach
+
+The model is evaluated as a rare-event classification problem. It produces a risk score and applies an operating threshold to create an alert. Precision-recall metrics are emphasized because accuracy alone can be misleading when positive patient-hours are uncommon. Threshold selection balances detection of deterioration against false-alert workload.
 
 ## Key results
 
@@ -34,11 +60,13 @@ At the selected threshold, this chart reported 1,005 detected positive hours, 3,
 
 This asks whether a deteriorating patient received at least one alert. It reports 50.81% detection of deteriorating patients and a 4.66% false-alert rate among non-deteriorating patients.
 
-## Project contents
+## What the project delivers
 
-- `notebooks/` — source preparation, Bronze ingestion, Silver transformations, ML evaluation, and Gold inference. Safe aggregate outputs and chart outputs are retained.
+- `notebooks/` — source preparation, Bronze ingestion, Silver feature engineering, ML evaluation, and Gold inference.
 - `docs/images/` — project charts used in this README.
 - `pipeline/` — logical notebook orchestration template.
+
+The Gold layer is designed to hold scored records, risk segments, and aggregate performance measures for downstream reporting. Any real implementation must apply organizational governance and disclosure controls.
 
 ## Important limitations
 
